@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>入组收官倒计时 | 526例目标</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- 每5分钟自动刷新页面（兜底） -->
+<meta http-equiv="refresh" content="300">
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f5f5f7;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    color: #1d1d1f;
+    padding: 0 20px;
+  }
+  .container {
+    text-align: center;
+    background: white;
+    padding: 40px 20px;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 600px;
+  }
+  h1 {
+    font-size: 36px;
+    margin-bottom: 10px;
+    color: #0071e3;
+  }
+  .subtitle {
+    font-size: 18px;
+    color: #86868b;
+    margin-bottom: 30px;
+  }
+  .countdown {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+  }
+  .box {
+    background: #f5f5f7;
+    padding: 20px 15px;
+    border-radius: 12px;
+    min-width: 80px;
+  }
+  .box .num {
+    font-size: 40px;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  .box .label {
+    font-size: 14px;
+    color: #86868b;
+  }
+  .progress {
+    width: 100%;
+    height: 15px;
+    background: #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #0071e3, #00c6ff);
+    width: 0%;
+    transition: width 0.5s ease;
+  }
+  .stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .stats div {
+    padding: 5px 10px;
+    border-radius: 6px;
+    background: #f0f8ff;
+  }
+  .refresh-tips {
+    font-size: 14px;
+    color: #86868b;
+    margin-top: 10px;
+  }
+  /* 适配小屏/鸿蒙平板 */
+  @media (max-width: 450px) {
+    .box {
+      min-width: 70px;
+    }
+    .box .num {
+      font-size: 32px;
+    }
+    h1 {
+      font-size: 28px;
+    }
+  }
+  /* 大屏适配 */
+  @media (min-width: 768px) {
+    .container {
+      max-width: 700px;
+      padding: 50px 40px;
+    }
+    .box .num {
+      font-size: 48px;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>入组收官倒计时</h1>
+  <div class="subtitle">目标：526 例 | 截止：2026-02-15</div>
+
+  <div class="countdown">
+    <div class="box">
+      <div id="days" class="num">00</div>
+      <div class="label">天</div>
+    </div>
+    <div class="box">
+      <div id="hours" class="num">00</div>
+      <div class="label">时</div>
+    </div>
+    <div class="box">
+      <div id="minutes" class="num">00</div>
+      <div class="label">分</div>
+    </div>
+    <div class="box">
+      <div id="seconds" class="num">00</div>
+      <div class="label">秒</div>
+    </div>
+  </div>
+
+  <div class="progress">
+    <div id="progressBar" class="progress-bar"></div>
+  </div>
+
+  <div class="stats">
+    <div id="completedText">已入组：-- / 526</div>
+    <div id="remainingText">剩余：--</div>
+    <div id="percentText">完成率：--%</div>
+  </div>
+
+  <div class="refresh-tips">数据每5分钟自动更新 | 最后更新：<span id="lastUpdate">--</span></div>
+</div>
+
+<script>
+  // ===================== 配置项（可根据需要修改） =====================
+  const TOTAL_TARGET = 526; // 总目标数
+  const TARGET_DATE = "2026/02/15 23:59:59"; // 截止日期
+  const TEAM_PASSWORD = "215526"; // 团队访问密码（可修改）
+  const REFRESH_INTERVAL = 3000; // 数据自动刷新间隔（毫秒），5分钟=300000
+  // 替换成你的GitHub仓库地址（后续部署后修改！）
+  const DATA_FILE_URL = "https://countdown526.netlify.app/count.txt";
+  // ==================================================================
+
+  // 1. 密码保护（防止外人访问）
+  const inputPwd = prompt('请输入团队访问密码：');
+  if (inputPwd !== TEAM_PASSWORD) {
+    document.body.innerHTML = '<div style="text-align:center;margin-top:50vh;"><h1 style="color:#ff3b30;">密码错误，禁止访问</h1></div>';
+    throw new Error("密码错误，终止执行");
+  }
+
+  // 2. 更新最后刷新时间
+  function updateLastUpdateTime() {
+    const now = new Date();
+    const timeStr = now.toLocaleString('zh-CN');
+    document.getElementById('lastUpdate').innerText = timeStr;
+  }
+
+  // 3. 核心：从GitHub读取count.txt数据并更新页面
+  async function loadLatestData() {
+    try {
+      // 加时间戳避免缓存
+      const url = `${DATA_FILE_URL}?t=${new Date().getTime()}`;
+      const response = await fetch(url);
+      
+      if (response.ok) {
+        const text = await response.text();
+        const completedNum = parseInt(text.trim());
+        
+        // 验证数字有效性
+        if (!isNaN(completedNum) && completedNum >= 0 && completedNum <= TOTAL_TARGET) {
+          const remainingNum = TOTAL_TARGET - completedNum;
+          const completedPercent = (completedNum / TOTAL_TARGET * 100).toFixed(1);
+          
+          // 更新页面显示
+          document.getElementById('progressBar').style.width = `${completedPercent}%`;
+          document.getElementById('completedText').innerText = `已入组：${completedNum} / ${TOTAL_TARGET}`;
+          document.getElementById('remainingText').innerText = `剩余：${remainingNum}`;
+          document.getElementById('percentText').innerText = `完成率：${completedPercent}%`;
+          updateLastUpdateTime();
+        } else {
+          throw new Error("数据格式错误，必须是0-526之间的数字");
+        }
+      } else {
+        throw new Error(`请求失败，状态码：${response.status}`);
+      }
+    } catch (error) {
+      console.error('读取数据失败：', error);
+      document.getElementById('completedText').innerText = `已入组：加载失败`;
+      document.getElementById('remainingText').innerText = `剩余：加载失败`;
+      document.getElementById('percentText').innerText = `完成率：加载失败`;
+    }
+  }
+
+  // 4. 倒计时逻辑
+  function updateCountdown() {
+    const targetTime = new Date(TARGET_DATE).getTime();
+    const now = new Date().getTime();
+    const distance = targetTime - now;
+
+    // 计算剩余时间
+    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+    // 补零显示
+    document.getElementById("days").innerText = days.toString().padStart(2, "0");
+    document.getElementById("hours").innerText = hours.toString().padStart(2, "0");
+    document.getElementById("minutes").innerText = minutes.toString().padStart(2, "0");
+    document.getElementById("seconds").innerText = seconds.toString().padStart(2, "0");
+
+    // 倒计时结束提示
+    if (distance < 0) {
+      clearInterval(countdownTimer);
+      document.querySelector(".countdown").innerHTML = "<div style='font-size:28px;font-weight:bold;color:#ff3b30;'>已截止</div>";
+    }
+  }
+
+  // 5. 初始化+自动循环
+  // 首次加载数据
+  loadLatestData();
+  // 初始化倒计时
+  updateCountdown();
+  // 每秒更新倒计时
+  const countdownTimer = setInterval(updateCountdown, 1000);
+  // 每5分钟自动刷新数据
+  setInterval(loadLatestData, REFRESH_INTERVAL);
+</script>
+</body>
+</html>
