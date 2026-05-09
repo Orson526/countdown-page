@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<title>入组收官倒计时 | 526例目标</title>
+<title>入组收官倒计时 | 1000例目标</title>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- 每5分钟自动刷新页面（兜底） -->
@@ -123,7 +123,7 @@
 <body>
 <div class="container">
   <h1>入组收官倒计时</h1>
-  <div class="subtitle">目标：526 例 | 截止：2026-02-15</div>
+  <div class="subtitle">目标：1000 例 | 截止：2027-02-4</div>
 
   <div class="countdown">
     <div class="box">
@@ -149,7 +149,7 @@
   </div>
 
   <div class="stats">
-    <div id="completedText">已入组：-- / 526</div>
+    <div id="completedText">已入组：-- / 1000</div>
     <div id="remainingText">剩余：--</div>
     <div id="percentText">完成率：--%</div>
   </div>
@@ -159,8 +159,8 @@
 
 <script>
   // ===================== 配置项（可根据需要修改） =====================
-  const TOTAL_TARGET = 526; // 总目标数
-  const TARGET_DATE = "2026/02/15 23:59:59"; // 截止日期
+  const TOTAL_TARGET = 1000; // 总目标数
+  const TARGET_DATE = "2027/02/04 23:59:59"; // 截止日期
   const TEAM_PASSWORD = "215526"; // 团队访问密码（可修改）
   const REFRESH_INTERVAL = 3000; // 数据自动刷新间隔（毫秒），5分钟=300000
   // 替换成你的GitHub仓库地址（后续部署后修改！）
@@ -204,7 +204,7 @@
           document.getElementById('percentText').innerText = `完成率：${completedPercent}%`;
           updateLastUpdateTime();
         } else {
-          throw new Error("数据格式错误，必须是0-526之间的数字");
+          throw new Error("数据格式错误，必须是0-1000之间的数字");
         }
       } else {
         throw new Error(`请求失败，状态码：${response.status}`);
